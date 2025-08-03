@@ -1,0 +1,19 @@
+# Local Environment
+.DS_Store
+*.swp
+*.swo
+
+# Python Related
+__pycache__/ 
+*.pyc
+.env
+*.env
+
+# Log
+*.log 
+*.dump 
+
+# Other
+*.tmp 
+*.bak
+*.orig
