@@ -16,6 +16,9 @@ A **Docker** Volume that persist log data and share it between the two container
 
 - `Prediction_FastAPI`: contains files to build FastAPI
 
+- `Makefile`: builds multi-containers for this application
+
+- `evaluate.py` and `test.json`: sends the default reviews to FastAPI and evaluate the entire process.
 
 ---
 
