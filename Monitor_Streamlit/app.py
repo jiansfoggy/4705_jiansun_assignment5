@@ -1,4 +1,4 @@
-import json
+import json,os
 import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
@@ -10,26 +10,26 @@ from plotly.subplots import make_subplots
 from sklearn.metrics import accuracy_score, precision_score
 
 # 1. Load Logs
-def load_logs(path):
+def load_logs(log_path):
     """
     Input:  UTF-8 encoded prediction_logs.json
     Output: 2 lists, request_texts and predicted_sentiments
     """
     texts, preds, true_sent = [], [], []
-    if not path.exists():
-        st.error(f"Log file not found at {path}")
+    try:
+        with open(log_path, 'r') as f:
+            for line in f:
+                try:
+                    obj = json.loads(line)
+                    texts.append(obj.get("request_text", ""))
+                    preds.append(obj.get("predicted_sentiment", ""))
+                    true_sent.append(obj.get("true_sentiment", "").capitalize())
+                except json.JSONDecodeError:
+                    continue
+        return texts, preds, true_sent
+    except FileNotFoundError:
+        st.error(f"Log file not found at {log_path}")
         st.stop()
-
-    with path.open("r", encoding="utf-8") as f:
-        for line in f:
-            try:
-                obj = json.loads(line)
-                texts.append(obj.get("request_text", ""))
-                preds.append(obj.get("predicted_sentiment", ""))
-                true_sent.append(obj.get("true_sentiment", "").capitalize())
-            except json.JSONDecodeError:
-                continue
-    return texts, preds, true_sent
 
 # 2. Load IMDB movie data
 def log_imdb(path):
@@ -48,7 +48,7 @@ def main():
     st.text("This app monitors the running status of Objective Movie Review Sentiment Analyzer, a FastAPI.")
 
     imdb_path = Path("./IMDB_Dataset.csv")
-    log_path = Path("/Users/jiansun/Documents/4705/4705_jiansun_assignment5/Prediction_FastAPI/logs/prediction_logs.json")
+    log_path = Path("./logs/prediction_logs.json")
 
     # 3. Load the Log and IMDB data
     st.header("1. Loading Log and IMDB Data")
@@ -66,13 +66,16 @@ def main():
     
     # 4. Compare the distribution of sentence lengths from both Log and IMDB data
     st.header("2. Data Drift Analysis -- Review Lengths: IMDB vs. Log Requests")
-    len_df = pd.DataFrame({
-        "imdb_length": imdb_len,
+    len_im = pd.DataFrame({
+        "imdb_length": imdb_len
+        })
+
+    len_te = pd.DataFrame({
         "test_length": text_len
         })
     
     fig_imdb = px.histogram(
-        len_df,
+        len_im,
         x="imdb_length",
         nbins=25,
         histnorm="density",
@@ -82,7 +85,7 @@ def main():
         )
 
     fig_test = px.histogram(
-        len_df,
+        len_te,
         x="test_length",
         nbins=25,
         histnorm="density",
@@ -113,7 +116,7 @@ def main():
     # 5. Bar chart of sentiment distributions
     st.header("3. Target Drift Analysis -- Sentiment Distribution: IMDB vs. Log Requests")
     # IMDB dataset has a 'sentiment' column with values 'positive'/'negative'
-    imdb_counts = imdb_df["sentiment"].value_counts().reset_index()
+    imdb_counts = imdb["sentiment"].value_counts().reset_index()
     imdb_counts.columns = ["sentiment", "count"]
     imdb_counts["source"] = "IMDB"
 

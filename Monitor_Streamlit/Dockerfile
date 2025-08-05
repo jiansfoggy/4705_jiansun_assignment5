@@ -12,6 +12,7 @@ RUN pip3 install -r requirements.txt
 
 # Copy the rest of the application's code into the container at /app
 COPY ./app.py /app/
+COPY ./IMDB_Dataset.csv /app/
 # COPY ./sentiment_model.pkl /app/
 
 # Make port 8501 available to the world outside this container

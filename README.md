@@ -116,12 +116,32 @@ Test the follow command in the Postman
 
   2. **Start the server**
 
-      Run `make run` to process the container from the image
+      Run `init-volume` to initialize and copy files in Prediction_FastAPI/logs/ to Docker Volume via a one-time container.
+
+      ```bash
+      make init-volume
+      ```
+
+      If success, it shows this on screen.
+
+      ```bash
+      >> Initializing volume 'logs-volume' with existing logs...
+      Unable to find image 'alpine:latest' locally
+      latest: Pulling from library/alpine
+      6e174226ea69: Pull complete 
+      Digest: sha256:4bcff63911fcb4448bd4fdacec207030997caf25e9bea4045fa6c8c44de311d1
+      Status: Downloaded newer image for alpine:latest
+      >> Volume initialized.
+      ```
+
+      Run `make run` to activate and process the container from the image.
+
+      FastAPI and Streamlit share the logs via the same Docker Volume
 
       ```bash
       make run
       ```
-
+      
       Services are up:
       ```bash
       • FastAPI at http://localhost:8000
