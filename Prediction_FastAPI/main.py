@@ -52,7 +52,7 @@ async def predict(input_data: TextInput):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Text cannot be empty"
             )
-
+   
     category = ["Negative","Positive"]
     prediction = model.predict([text])[0]
     pred = category[int(prediction)]
@@ -115,3 +115,4 @@ def example():
 
 # uvicorn main:app --reload
 # curl 'http://127.0.0.1:8000/health'
+# POST http://localhost:8000/predict?text=This%20movie%20was%20a%20masterpiece!&true_sentiment=Positive

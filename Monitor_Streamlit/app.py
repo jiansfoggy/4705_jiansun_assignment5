@@ -6,6 +6,7 @@ import seaborn as sns
 import streamlit as st
 
 from pathlib import Path
+import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from sklearn.metrics import accuracy_score, precision_score
 
@@ -55,6 +56,7 @@ def main():
     texts, preds, true_sent = load_logs(log_path)
     st.write(f"Loaded {len(texts)} log entries")
     text_len = [len(t) for t in texts]
+    text_len = sorted(text_len)
     st.write(f"Sample lengths from logs:\n{text_len[:5]}")
     st.write(f"Sample predictions from logs:\n{preds[:5]}")
 
@@ -69,11 +71,10 @@ def main():
     len_im = pd.DataFrame({
         "imdb_length": imdb_len
         })
-
     len_te = pd.DataFrame({
         "test_length": text_len
         })
-    
+
     fig_imdb = px.histogram(
         len_im,
         x="imdb_length",
@@ -83,21 +84,30 @@ def main():
         labels={"imdb_length": "Sentence Length"},
         title="IMDB Review Length"
         )
-
+    
+    lo = len_te['test_length'].min()
+    hi = len_te['test_length'].max()
+    bin_size = (hi - lo) / 25
     fig_test = px.histogram(
         len_te,
         x="test_length",
-        nbins=25,
+        # nbins=10,
         histnorm="density",
         opacity=0.75,
         labels={"test_length": "Sentence Length"},
         title="Logged Request Text Length"
         )
 
+    fig_test.update_traces(xbins=dict(
+        start=lo,
+        end=hi,
+        size=bin_size
+    ))
+
     fig1 = make_subplots(
         rows=1, cols=2,
         subplot_titles=("IMDB Review Length", "Request Text Length"),
-        shared_yaxes=True
+        shared_yaxes=False
         )
 
     for trace in fig_imdb.data:
@@ -124,15 +134,53 @@ def main():
     log_counts.columns = ["sentiment", "count"]
     log_counts["source"] = "Logs"
 
-    bar_df = pd.concat([imdb_counts, log_counts], ignore_index=True)
-    fig2 = px.bar(
-        bar_df,
-        x="sentiment",
-        y="count",
-        color="source",
-        barmode="group",
-        title="IMDB vs. Logs Sentiment Counts"
+    fig2 = make_subplots(
+        rows=1, cols=2,
+        subplot_titles=("IMDB Sentiment Counts", "Logged Sentiment Counts"),
+        shared_yaxes=False
         )
+
+    # Add IMDB bar chart in column 1
+    fig2.add_trace(
+        go.Bar(
+            x=imdb_counts["sentiment"],
+            y=imdb_counts["count"],
+            name="IMDB"
+            ),
+        row=1, col=1
+        )
+
+    # Add Logs bar chart in column 2
+    fig2.add_trace(
+        go.Bar(
+            x=log_counts["sentiment"],
+            y=log_counts["count"],
+            name="Logs",
+            marker_color='orange'
+            ),
+        row=1, col=2
+        )
+    
+    fig2.update_layout(
+        title="IMDB vs. Logs Sentiment Counts",
+        showlegend=True, width=800, height=400,
+        template="plotly_white"
+        )
+
+    fig2.update_yaxes(title_text="Count", row=1, col=1)
+    fig2.update_yaxes(title_text="Count", row=1, col=2)
+
+    # bar_df = pd.concat([imdb_counts, log_counts], ignore_index=True)
+    # fig2 = px.bar(
+    #     bar_df,
+    #     x="sentiment",
+    #     y="count",
+    #     color="source",
+    #     barmode="group",
+    #     title="IMDB vs. Logs Sentiment Counts"
+    #     )
+    # # disable shared y-axis so each subplot scales independently
+    # fig2.update_yaxes(matches=None)
     st.plotly_chart(fig2, use_container_width=True)
 
     # 6. Model Accuracy & User Feedback:
